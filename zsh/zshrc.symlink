@@ -18,5 +18,10 @@ fi
 autoload -U compinit
 compinit
 
+# ls on cd
+cd() {
+  builtin cd "$@" && ls
+}
+
 # load every completion after autocomplete loads
 for config_file ($ZSH/**/completion.zsh) source $config_file
