@@ -11,9 +11,10 @@
         helper = osxkeychain
 [alias]
         co = checkout
-        wtf     = !$ZSH/bin/git-wtf
+        wtf = !$ZSH/bin/git-wtf
+        reset-file = checkout --
         rank-contributers = !$ZSH/bin/git-rank-contributers
-        count   = !git shortlog -sn
+        count = !git shortlog -sn
 [color]
         diff = auto
         status = auto
