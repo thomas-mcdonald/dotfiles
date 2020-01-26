@@ -2,4 +2,4 @@ include = {$include,.*}
 exclude = {$exclude,.git}
 
 excludeInFileChooser = '{$excludeInFileChooser,node_modules,tmp,vendor}'
-excludeInFolderSearch = '{$excludeInFolderSearch,node_modules}'
+excludeInFolderSearch = '{$excludeInFolderSearch,log,node_modules}'
