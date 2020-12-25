@@ -8,3 +8,7 @@ then
   alias ll="gls -l --color"
   alias la='gls -A --color'
 fi
+
+if [[ $(uname -m) == "arm64" ]]; then
+  alias ibrew='arch -x86_64 /usr/local/bin/brew'
+fi
