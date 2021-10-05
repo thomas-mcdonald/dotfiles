@@ -1,1 +1,1 @@
-rake install
+rake install["force"]
