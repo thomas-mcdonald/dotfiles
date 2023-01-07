@@ -1,12 +1,13 @@
 require 'rake'
 
 desc "Hook our dotfiles into system-standard positions."
-task :install do
+task :install, [:mode] do |_task, args|
+  force = args["mode"] == "force"
   linkables = Dir.glob('*/**{.symlink}')
 
   skip_all = false
-  overwrite_all = false
-  backup_all = false
+  overwrite_all = force
+  backup_all = force
 
   linkables.each do |linkable|
     overwrite = false
@@ -35,7 +36,6 @@ task :install do
 end
 
 task :uninstall do
-
   Dir.glob('**/*.symlink').each do |linkable|
 
     file = linkable.split('/').last.split('.symlink').last
