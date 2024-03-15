@@ -33,6 +33,10 @@ task :install, [:mode] do |_task, args|
     end
     `ln -s "$PWD/#{linkable}" "#{target}"`
   end
+
+  if ENV["CODESPACES"]
+    `ln -s $PWD "$HOME/.dotfiles"`
+  end
 end
 
 task :uninstall do
