@@ -1,40 +1,43 @@
-#!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
+#!/usr/bin/env bash
+# Fast bash replacement for git_cwd_info
 
-# The methods that get called more than once are memoized.
+# Get git directory
+git_repo_path=$(git rev-parse --git-dir 2>/dev/null)
 
-def git_repo_path
-  @git_repo_path ||= `git rev-parse --git-dir 2>/dev/null`.strip
-end
+# Exit early if not in a git repo or in home directory
+if [[ -z "$git_repo_path" ]] || [[ "$git_repo_path" == "$HOME/.git" ]]; then
+  exit 0
+fi
 
-def in_git_repo
-  !git_repo_path.empty? &&
-  git_repo_path != '~' &&
-  git_repo_path != "#{ENV['HOME']}/.git"
-end
+# Get branch name (fastest method - read HEAD directly)
+if [[ -f "$git_repo_path/HEAD" ]]; then
+  branch=$(< "$git_repo_path/HEAD")
+  branch=${branch#ref: refs/heads/}
+else
+  exit 0
+fi
 
-def git_parse_branch
-  @git_parse_branch ||= File.read("#{git_repo_path}/HEAD").strip.scan(/refs\/heads\/(.*)$/).flatten.first
-end
+# Get short commit ID
+commit=$(git rev-parse --short HEAD 2>/dev/null)
 
-def git_head_commit_id
-  `git rev-parse --short HEAD 2>/dev/null`.strip
-end
+# Check for special states
+state=""
+if [[ -f "$git_repo_path/BISECT_LOG" ]]; then
+  state="+bisect"
+elif [[ -f "$git_repo_path/MERGE_HEAD" ]]; then
+  state="+merge"
+elif [[ -d "$git_repo_path/rebase-merge" ]] || [[ -d "$git_repo_path/rebase-apply" ]]; then
+  state="+rebase"
+fi
 
-def git_cwd_dirty
-  " %{\e[90m%}✗%{\e[0m%}" unless git_repo_path == '.' || `git ls-files -m`.strip.empty?
-end
+# Check for dirty working directory (skip if git_repo_path is current dir)
+dirty=""
+if [[ "$git_repo_path" != "." ]]; then
+  # Fast dirty check - only check if there are modified files
+  if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+    dirty=" %{$(echo -e "\e[90m")%}✗%{$(echo -e "\e[0m")%}"
+  fi
+fi
 
-def rebasing_etc
-  if File.exist?(File.join(git_repo_path, 'BISECT_LOG'))
-    "+bisect"
-  elsif File.exist?(File.join(git_repo_path, 'MERGE_HEAD'))
-    "+merge"
-  elsif %w[rebase rebase-apply rebase-merge ../.dotest].any? { |d| File.exist?(File.join(git_repo_path, d)) }
-    "+rebase"
-  end
-end
-
-if in_git_repo
-  print " %{\e[34m%}#{git_parse_branch}%{\e[90m%}@%{\e[33m%}#{git_head_commit_id}%{\e[0m%}#{rebasing_etc}#{git_cwd_dirty}"
-end
+# Print the prompt info
+printf " %%{$(echo -e "\e[34m")%%}%s%%{$(echo -e "\e[90m")%%}@%%{$(echo -e "\e[33m")%%}%s%%{$(echo -e "\e[0m")%%}%s%s" "$branch" "$commit" "$state" "$dirty"
