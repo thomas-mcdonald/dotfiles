@@ -20,7 +20,9 @@ compinit -u
 
 # ls on cd
 cd() {
-  builtin cd "$@" && ls
+  if builtin cd "$@"; then
+    [[ "${CLAUDECODE:-0}" != "1" ]] && ls
+  fi
 }
 
 # load every completion after autocomplete loads
