@@ -1,40 +1,29 @@
-#!/usr/bin/ruby
-require 'irb/completion'
-require 'irb/ext/save-history'
-require 'rubygems'
+# frozen_string_literal: true
 
-IRB.conf[:SAVE_HISTORY] = 1000
-IRB.conf[:HISTORY_FILE] = "#{ENV['HOME']}/.irb_history"
+# History saving is built into modern irb — just keep more of it.
+IRB.conf[:SAVE_HISTORY] = 10_000
+IRB.conf[:HISTORY_FILE] = File.expand_path("~/.irb_history")
 
 IRB.conf[:PROMPT_MODE] = :SIMPLE
 
-IRB.conf[:AUTO_INDENT] = true
+# Type-aware autocompletion (Prism-based). Ships with Ruby 3.4 for plain irb;
+# inside a bundled app (e.g. `rails console`) it needs `gem "repl_type_completor"`
+# in the Gemfile's development group, otherwise this quietly falls back to the
+# default regexp completor.
+begin
+  require "repl_type_completor"
+  IRB.conf[:COMPLETOR] = :type
+rescue LoadError
+end
 
 class Object
-  # list methods which aren't in superclass
+  # Methods defined by this object's class itself, not inherited ones.
   def local_methods(obj = self)
     (obj.methods - obj.class.superclass.instance_methods).sort
   end
-  
-  # print documentation
-  #
-  #   ri 'Array#pop'
-  #   Array.ri
-  #   Array.ri :pop
-  #   arr.ri :pop
-  def ri(method = nil)
-    unless method && method =~ /^[A-Z]/ # if class isn't specified
-      klass = self.kind_of?(Class) ? name : self.class.name
-      method = [klass, method].compact.join('#')
-    end
-    puts `ri '#{method}'`
-  end
 end
 
-def me
-  User.find_by_login('holman')
-end
-
+# Rails console shortcut: reload the app.
 def r
   reload!
 end
